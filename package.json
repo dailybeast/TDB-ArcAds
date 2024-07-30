@@ -1,7 +1,7 @@
 {
-  "name": "arcads",
+  "name": "@dailybeast/arcads",
   "version": "6.2.0",
-  "description": "ArcAds is a GPT wrapper created by Arc XP with publishers in mind.",
+  "description": "This is a fork of https://github.com/washingtonpost/ArcAds. ArcAds is a GPT wrapper created by Arc XP with publishers in mind.",
   "main": "dist/arcads.js",
   "files": [
     "dist/arcads.js"

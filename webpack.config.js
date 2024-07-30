@@ -1,7 +1,7 @@
-const ESLintPlugin = require('eslint-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
+const ESLintPlugin = require("eslint-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
 
-const path = require('path');
+const path = require("path");
 
 const generateOptimizations = (env) => {
   const optimizations = { minimize: false };
@@ -9,9 +9,9 @@ const generateOptimizations = (env) => {
     optimizations.minimize = true;
     optimizations.minimizer = [
       new TerserPlugin({
-        terserOptions: { format: { comments: false }, },
+        terserOptions: { format: { comments: false } },
         extractComments: false,
-      })
+      }),
     ];
   }
   return optimizations;
@@ -26,25 +26,33 @@ const generatePlugins = (env) => {
   return plugins;
 };
 
-module.exports = env => ({
-  entry: './src/index.js',
+module.exports = (env) => ({
+  entry: "./src/index.js",
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'arcads.js',
-    libraryTarget: 'umd',
-    globalObject: 'typeof self !== \'undefined\' ? self : this',
+    // path: path.resolve(__dirname, "dist"),
+    path: path.resolve(
+      __dirname,
+      "..",
+      "arcxp-themes2",
+      "resources",
+      "js",
+      "ads"
+    ),
+    filename: "arcads.js",
+    libraryTarget: "umd",
+    globalObject: "typeof self !== 'undefined' ? self : this",
   },
-  devtool: env.development ? 'inline-source-map' : false,
-  resolve: { extensions: ['.js', '.json'] },
+  devtool: env.development ? "inline-source-map" : false,
+  resolve: { extensions: [".js", ".json"] },
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env'],
+            presets: ["@babel/preset-env"],
           },
         },
       },
