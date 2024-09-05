@@ -9,9 +9,9 @@ const generateOptimizations = (env) => {
     optimizations.minimize = true;
     optimizations.minimizer = [
       new TerserPlugin({
-        terserOptions: { format: { comments: false }, },
+        terserOptions: { format: { comments: false } },
         extractComments: false,
-      })
+      }),
     ];
   }
   return optimizations;
@@ -26,13 +26,14 @@ const generatePlugins = (env) => {
   return plugins;
 };
 
-module.exports = env => ({
+module.exports = (env) => ({
   entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    // path: path.resolve(__dirname, "dist"),
+    path: path.resolve(__dirname, '..', 'arcxp-themes2', 'resources', 'js', 'ads'),
     filename: 'arcads.js',
     libraryTarget: 'umd',
-    globalObject: 'typeof self !== \'undefined\' ? self : this',
+    globalObject: "typeof self !== 'undefined' ? self : this",
   },
   devtool: env.development ? 'inline-source-map' : false,
   resolve: { extensions: ['.js', '.json'] },

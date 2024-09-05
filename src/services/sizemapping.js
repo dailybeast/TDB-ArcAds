@@ -10,10 +10,10 @@ export const sizemapListeners = {};
 export const resizeListeners = {};
 
 /**
-* @desc Prepares a set of dimensions and their corresponding breakpoints to create a sizemap which is readable by GPT.
-* @param {array} dimensions - An array containing all of the applicable sizes the advertisement can use.
-* @param {array} sizemap - An array containing all of the applicable breakpoints for the sizemapping.
-**/
+ * @desc Prepares a set of dimensions and their corresponding breakpoints to create a sizemap which is readable by GPT.
+ * @param {array} dimensions - An array containing all of the applicable sizes the advertisement can use.
+ * @param {array} sizemap - An array containing all of the applicable breakpoints for the sizemapping.
+ **/
 export function prepareSizeMaps(dimensions, sizemap) {
   const mapping = [];
   const breakpoints = [];
@@ -32,25 +32,23 @@ export function prepareSizeMaps(dimensions, sizemap) {
     });
   }
 
-  breakpoints.sort((a, b) => { return a - b; });
+  breakpoints.sort((a, b) => {
+    return a - b;
+  });
 
   return { mapping, breakpoints, correlators };
 }
 
 /**
-* @desc Determines which set of ad sizes are about to display based on the users current screen size.
-* @param {array} sizeMappings - An array containing the advertisements GPT readable size mapping.
-* @return {array} - Returns an array containing the ad sizes which relate to the users current window width.
-**/
+ * @desc Determines which set of ad sizes are about to display based on the users current screen size.
+ * @param {array} sizeMappings - An array containing the advertisements GPT readable size mapping.
+ * @return {array} - Returns an array containing the ad sizes which relate to the users current window width.
+ **/
 export function parseSizeMappings(sizeMappings) {
   try {
-    const width = window.innerWidth ||
-    document.documentElement.clientWidth ||
-    document.body.clientWidth;
+    const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 
-    const height = window.innerHeight ||
-    document.documentElement.clientHeight ||
-    document.body.clientHeight;
+    const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
     const sd = [width, height];
 
@@ -77,33 +75,25 @@ export function parseSizeMappings(sizeMappings) {
 }
 
 /**
-* @desc Resize event that checks if a user has resized past a breakpoint included in the advertisements sizemap. If it has the GPT
-* refresh method is called so the service can fetch a more apropriately sized creative.
-* @param {object} params - An object containing all of the advertisement configuration settings such as slot name, id, and position.
-**/
+ * @desc Resize event that checks if a user has resized past a breakpoint included in the advertisements sizemap. If it has the GPT
+ * refresh method is called so the service can fetch a more apropriately sized creative.
+ * @param {object} params - An object containing all of the advertisement configuration settings such as slot name, id, and position.
+ **/
 export function runResizeEvents(params) {
   let lastBreakpoint;
   let initialLoad = false;
 
   if (params.breakpoints) {
     /**
-    * Initially set lastBreakpoint to be the largest breakpoint
-    * that's smaller than the current window width
-    **/
+     * Initially set lastBreakpoint to be the largest breakpoint
+     * that's smaller than the current window width
+     **/
     const initialWidth = window.innerWidth;
-    lastBreakpoint = params.breakpoints.filter(bp => bp < initialWidth).pop() || params.breakpoints[0];
+    lastBreakpoint = params.breakpoints.filter((bp) => bp < initialWidth).pop() || params.breakpoints[0];
   }
 
   return () => {
-    const {
-      ad,
-      breakpoints,
-      id,
-      bidding,
-      mapping,
-      slotName,
-      wrapper,
-      prerender } = params;
+    const { ad, breakpoints, id, bidding, mapping, slotName, wrapper, prerender } = params;
 
     const width = window.innerWidth;
     let breakpoint;
@@ -112,6 +102,7 @@ export function runResizeEvents(params) {
     for (let i = 0; i < breakpoints.length; i++) {
       breakpoint = breakpoints[i];
       nextBreakpoint = breakpoints[i + 1];
+      console.log(`@JT ~ return ~ breakpoint:`, breakpoint, nextBreakpoint);
 
       if (lastBreakpoint !== breakpoint && ((width > breakpoint && (width < nextBreakpoint || !nextBreakpoint)) || (width === breakpoint && !initialLoad))) {
         lastBreakpoint = breakpoint;
@@ -124,7 +115,7 @@ export function runResizeEvents(params) {
           adUnit: ad,
           adSlot: slotName,
           adDimensions: parsedSizeMapping,
-          adId: id
+          adId: id,
         };
 
         // If it's included in a header-bidding service we re-fetch bids for the given slot, otherwise it refreshes as normal.
@@ -138,14 +129,14 @@ export function runResizeEvents(params) {
             wrapper,
             prerender,
             correlator: sizemapListeners[id].correlators[i],
-            breakpoints
+            breakpoints,
           });
         } else {
           refreshSlot({
             ad,
             correlator: sizemapListeners[id].correlators[i],
             prerender,
-            info: adInfo
+            info: adInfo,
           });
         }
       }
@@ -156,10 +147,10 @@ export function runResizeEvents(params) {
 }
 
 /**
-* @desc Assigns an event listener for a size mapped ad which detects when the screen resizes past a breakpoint in the sizemap.
-* Also stores the event listener in an object sorted by the advertisement id so it can be unbound later if needed.
-* @param {object} params - An object containing all of the advertisement configuration settings such as slot name, id, and position.
-**/
+ * @desc Assigns an event listener for a size mapped ad which detects when the screen resizes past a breakpoint in the sizemap.
+ * Also stores the event listener in an object sorted by the advertisement id so it can be unbound later if needed.
+ * @param {object} params - An object containing all of the advertisement configuration settings such as slot name, id, and position.
+ **/
 export function setResizeListener(params) {
   const { id, correlators } = params;
 
@@ -169,4 +160,3 @@ export function setResizeListener(params) {
   // Adds the listener to an object with the id as the key so we can unbind it later.
   sizemapListeners[id] = { listener: resizeListeners[id], correlators };
 }
-
