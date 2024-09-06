@@ -102,11 +102,20 @@ export function runResizeEvents(params) {
     for (let i = 0; i < breakpoints.length; i++) {
       breakpoint = breakpoints[i];
       nextBreakpoint = breakpoints[i + 1];
-      console.log(`@JT ~ return ~ breakpoint:`, breakpoint, nextBreakpoint);
 
       if (lastBreakpoint !== breakpoint && ((width > breakpoint && (width < nextBreakpoint || !nextBreakpoint)) || (width === breakpoint && !initialLoad))) {
         lastBreakpoint = breakpoint;
         initialLoad = true;
+        const breakpointNames = {
+          [breakpoints[0]]: 'mobile',
+          [breakpoints[1]]: 'tablet',
+          [breakpoints[2]]: 'desktop',
+        };
+        const breakpointName = breakpointNames[breakpoint] || 'unknown';
+        const breakpointTargeting = params.targeting?.breakpointTargeting[breakpointName];
+        if (breakpointTargeting) {
+          setTargeting(ad, breakpointTargeting);
+        }
 
         // Fetches a set of dimensions for the ad which is about to display.
         const parsedSizeMapping = parseSizeMappings(mapping);
