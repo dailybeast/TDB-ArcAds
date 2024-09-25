@@ -89,7 +89,7 @@ export function runResizeEvents(params) {
      * that's smaller than the current window width
      **/
     const initialWidth = window.innerWidth;
-    lastBreakpoint = params.breakpoints.filter((bp) => bp < initialWidth).pop() || params.breakpoints[0];
+    lastBreakpoint = params.breakpoints.filter(bp => bp < initialWidth).pop() || params.breakpoints[0];
   }
 
   return () => {
@@ -112,7 +112,7 @@ export function runResizeEvents(params) {
           [breakpoints[2]]: 'desktop',
         };
         const breakpointName = breakpointNames[breakpoint] || 'unknown';
-        const breakpointTargeting = params.targeting?.breakpointTargeting[breakpointName];
+        const breakpointTargeting = (params.targeting && params.targeting.breakpointTargeting) ? params.targeting.breakpointTargeting[breakpointName] : undefined;
         if (breakpointTargeting) {
           setTargeting(ad, breakpointTargeting);
         }

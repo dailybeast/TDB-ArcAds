@@ -6,7 +6,7 @@ import { queuePrebidCommand, addUnit } from './services/prebid';
 import { prepareSizeMaps, setResizeListener } from './services/sizemapping';
 
 function getArrayDepth(array) {
-  return Array.isArray(array) ? 1 + Math.max(...array.map((child) => getArrayDepth(child))) : 0;
+  return Array.isArray(array) ? 1 + Math.max(...array.map(child => getArrayDepth(child))) : 0;
 }
 
 /** @desc Displays an advertisement from Google DFP with optional support for Prebid.js and Amazon TAM/A9. **/
@@ -170,15 +170,23 @@ export class ArcAds {
   displayAd({ id, slotName, dimensions, targeting, sizemap = false, bidding = false, prerender = null }) {
     const fullSlotName = determineSlotName(this.dfpId, slotName);
     const parsedDimensions = dimensions && !dimensions.length ? null : dimensions;
+
+    // Corrected reduce logic
     const bps = sizemap.breakpoints.reduce((acc, bp, i) => {
-      const bps = ['desktop', 'tablet', 'mobile'];
+      const labels = ['desktop', 'tablet', 'mobile'];
       return {
         ...acc,
-        [bp[0]]: bps[i],
+        [bp[0]]: labels[i],
       };
     }, {});
-    const breakpoint = bps[sizemap.breakpoints.find((bp) => window.innerWidth >= bp[0])[0]];
+
+    const breakpoint = bps[sizemap.breakpoints.find(bp => window.innerWidth >= bp[0])[0]];
     const { breakpointTargeting, ...rest } = targeting;
+    //console.log('breakpoint', breakpoint);
+    //console.log('breakpointTargeting', breakpointTargeting);
+    //console.log('parsedDimensions', parsedDimensions);
+    //console.log('id', id);
+    //console.log('fullSlotName', fullSlotName);
     const ad = !dimensions ? window.googletag.defineOutOfPageSlot(fullSlotName, id) : window.googletag.defineSlot(fullSlotName, parsedDimensions, id);
 
     if (sizemap && sizemap.breakpoints && dimensions) {
@@ -255,6 +263,7 @@ export class ArcAds {
       const slotElementId = ad.getSlotElementId();
       if (slotElementId === id) {
         ad.setTargeting('rfrsh', refreshCount);
+        ad.setTargeting('refAd', 'true');
         fetchBids({
           ad,
           id,
