@@ -274,6 +274,8 @@ export class ArcAds {
           bidding,
           breakpoints: safebreakpoints,
         });
+      } else {
+        ad.setTargeting('refAd', false);
       }
     });
   }
