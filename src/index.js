@@ -1,4 +1,4 @@
-import { MobileDetection } from './util/mobile';
+//import { MobileDetection } from './util/mobile';
 import { sendLog } from './util/log';
 import { fetchBids, initializeBiddingServices } from './services/headerbidding';
 import { initializeGPT, queueGoogletagCommand, refreshSlot, dfpSettings, setTargeting, determineSlotName } from './services/gpt';
@@ -17,8 +17,6 @@ export class ArcAds {
     this.positions = [];
     this.collapseEmptyDivs = options.dfp.collapseEmptyDivs;
     this.adsList = [];
-    window.isMobile = MobileDetection;
-
     if (this.dfpId === '') {
       console.warn('ArcAds: DFP id is missing from the arcads initialization script.', '\n', 'Documentation: https://github.com/washingtonpost/arcads#getting-started');
       sendLog('constructor()', 'The DFP id missing from the arcads initialization script. ArcAds cannot proceed.', null);
@@ -34,10 +32,13 @@ export class ArcAds {
    * @param {object} params - An object containing all of the advertisement configuration settings such as slot name, id, and position.
    **/
   registerAd(params) {
+    console.log('registerAd', params);
     const { id, slotName, dimensions, adType = false, targeting = {}, display = 'all', bidding = false, iframeBidders = ['openx'], others = {} } = params;
     const flatDimensions = [];
     let processDisplayAd = false;
     const dimensionsDepth = getArrayDepth(dimensions);
+    const isMobile = slotName.includes('.mw');
+    console.log('isMobile', isMobile, slotName);
 
     if (dimensions && typeof dimensions !== 'undefined' && dimensionsDepth === 1) {
       flatDimensions.push(...dimensions);
@@ -62,7 +63,7 @@ export class ArcAds {
 
       const prebidEnabled = bidding.prebid && ((bidding.prebid.enabled && bidding.prebid.bids) || (typeof bidding.prebid.enabled === 'undefined' && bidding.prebid.bids));
 
-      if ((isMobile.any() && display === 'mobile') || (!isMobile.any() && display === 'desktop') || display === 'all') {
+      if ((isMobile && display === 'mobile') || (!isMobile && display === 'desktop') || display === 'all') {
         // Registers the advertisement with Prebid.js if enabled on both the unit and wrapper.
         if (prebidEnabled && this.wrapper.prebid && this.wrapper.prebid.enabled && flatDimensions) {
           if (pbjs && iframeBidders.length > 0) {
@@ -275,7 +276,7 @@ export class ArcAds {
           breakpoints: safebreakpoints,
         });
       } else {
-        ad.setTargeting('refAd', false);
+        ad.setTargeting('refAd', 'false');
       }
     });
   }
