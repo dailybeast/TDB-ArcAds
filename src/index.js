@@ -4,6 +4,7 @@ import { fetchBids, initializeBiddingServices } from './services/headerbidding';
 import { initializeGPT, queueGoogletagCommand, refreshSlot, dfpSettings, setTargeting, determineSlotName } from './services/gpt';
 import { queuePrebidCommand, addUnit } from './services/prebid';
 import { prepareSizeMaps, setResizeListener } from './services/sizemapping';
+import noRefresh from './util/noRefresh.json';
 
 function getArrayDepth(array) {
   return Array.isArray(array) ? 1 + Math.max(...array.map(child => getArrayDepth(child))) : 0;
@@ -38,7 +39,6 @@ export class ArcAds {
     let processDisplayAd = false;
     const dimensionsDepth = getArrayDepth(dimensions);
     const isMobile = slotName.includes('.mw');
-    console.log('isMobile', isMobile, slotName);
 
     if (dimensions && typeof dimensions !== 'undefined' && dimensionsDepth === 1) {
       flatDimensions.push(...dimensions);
@@ -56,9 +56,14 @@ export class ArcAds {
       if ((!targeting || !targeting.hasOwnProperty('position')) && adType !== false) {
         const position = this.positions[adType] + 1 || 1;
         this.positions[adType] = position;
-
         const positionParam = Object.assign(targeting, { position });
         Object.assign(params, { targeting: positionParam });
+      }
+
+      if ((!targeting || !targeting.hasOwnProperty('refAd')) && adType !== false) {
+        const refAd = 'false';
+        const refParam = Object.assign(targeting, { refAd });
+        Object.assign(params, { targeting: refParam });
       }
 
       const prebidEnabled = bidding.prebid && ((bidding.prebid.enabled && bidding.prebid.bids) || (typeof bidding.prebid.enabled === 'undefined' && bidding.prebid.bids));
@@ -126,9 +131,8 @@ export class ArcAds {
       timeout: bidderTimeout,
       //adUnitCodes: codes,
       bidsBackHandler: (result) => {
-        console.log('Bid Back Handler', result);
+        console.log('bidsBackHandler', result);
         pbjs.setTargetingForGPTAsync();
-
         window.googletag.pubads().refresh(window.adsList);
         window.adsList = [];
       },
@@ -183,11 +187,6 @@ export class ArcAds {
 
     const breakpoint = bps[sizemap.breakpoints.find(bp => window.innerWidth >= bp[0])[0]];
     const { breakpointTargeting, ...rest } = targeting;
-    //console.log('breakpoint', breakpoint);
-    //console.log('breakpointTargeting', breakpointTargeting);
-    //console.log('parsedDimensions', parsedDimensions);
-    //console.log('id', id);
-    //console.log('fullSlotName', fullSlotName);
     const ad = !dimensions ? window.googletag.defineOutOfPageSlot(fullSlotName, id) : window.googletag.defineSlot(fullSlotName, parsedDimensions, id);
 
     if (sizemap && sizemap.breakpoints && dimensions) {
@@ -259,26 +258,52 @@ export class ArcAds {
     const fullSlotName = determineSlotName(this.dfpId, slotName);
     const parsedDimensions = dimensions && !dimensions.length ? null : dimensions;
     const safebreakpoints = sizemap && sizemap.breakpoints ? sizemap.breakpoints : [];
-
-    this.adsList.forEach((ad) => {
-      const slotElementId = ad.getSlotElementId();
-      if (slotElementId === id) {
-        ad.setTargeting('rfrsh', refreshCount);
-        ad.setTargeting('refAd', 'true');
-        fetchBids({
-          ad,
-          id,
-          slotName: fullSlotName,
-          dimensions: parsedDimensions,
-          wrapper: this.wrapper,
-          prerender,
-          bidding,
-          breakpoints: safebreakpoints,
-        });
-      } else {
-        ad.setTargeting('refAd', 'false');
-      }
+    const adDiv = document.getElementById(id);
+    if (!adDiv) {
+      console.error(`Ad div with ID ${id} not found`);
+      return;
+    }
+    const intersectionCallback = (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Run the refresh logic only if the div is in view && the current refresh count is less than the max refresh count
+          this.adsList.forEach((ad) => {
+            const slotElementId = ad.getSlotElementId();
+            const adInfo = ad.getResponseInformation();
+            let lineItemId = null;
+            if (adInfo) {
+              lineItemId = adInfo.lineItemId ? adInfo.lineItemId : null;
+            }
+            //lineItemId = 6315263907;
+            const findLineItem = noRefresh.find(item => item === lineItemId);
+            if (!findLineItem) {
+              if (slotElementId === id) {
+                ad.setTargeting('rfrsh', refreshCount);
+                ad.setTargeting('refAd', 'true');
+                fetchBids({
+                  ad,
+                  id,
+                  slotName: fullSlotName,
+                  dimensions: parsedDimensions,
+                  wrapper: this.wrapper,
+                  prerender,
+                  bidding,
+                  breakpoints: safebreakpoints,
+                });
+              }
+            } else {
+              console.log('No refresh for this ad', lineItemId);
+            }
+          });
+          observer.disconnect(); // Stop observing after refresh
+        }
+      });
+    };
+    const observer = new IntersectionObserver(intersectionCallback, {
+      root: null, // Observe within the viewport
+      threshold: 0.5, // Trigger when 50% of the ad is in view
     });
+    observer.observe(adDiv); // Start observing the ad div
   }
 
   /**

@@ -127,6 +127,16 @@ export function dfpSettings(handleSlotRenderEnded) {
       'This wrapper has a function to call upon the slot render ending.',
       null
     );
+    /* googletag.pubads().enableLazyLoad({
+      // Fetch slots within 5 viewports.
+      fetchMarginPercent: 500,
+      // Render slots within 2 viewports.
+      renderMarginPercent: 200,
+      // Double the above values on mobile, where viewports are smaller
+      // and users tend to scroll faster.
+      mobileScaling: 2.0,
+    });
+ */
     window.googletag
       .pubads()
       .addEventListener('slotRenderEnded', handleSlotRenderEnded);
